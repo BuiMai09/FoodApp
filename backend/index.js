@@ -71,7 +71,7 @@ app.post("/login", async (req, res) => {
         alert: false
       });
     }
-    // Tạo token
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ user, token, message: "Login is successfully", alert: true });
@@ -81,7 +81,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// đăng xuất
+
 app.post('/logout', (req, res) => {
   res.clearCookie('token');
   res.status(200).send({ message: 'Logout success.' });
@@ -110,7 +110,6 @@ app.post("/uploadProduct", async (req, res) => {
     res.status(500).send('Server error');
   }
 })
-
 app.get("/product/edit/:id", async (req, res) => {
   try {
     const product = await productModel.findById(req.params.id);
@@ -119,7 +118,6 @@ app.get("/product/edit/:id", async (req, res) => {
     res.status(404).json({ message: error.message })
   }
 })
-
 app.put('/uploadProduct/:id', async (req, res) => {
   let product = req.body;
 
