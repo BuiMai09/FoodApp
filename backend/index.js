@@ -5,8 +5,12 @@ const dotenv = require("dotenv").config();
 const bcrypt = require('bcrypt');
 const Stripe = require('stripe')
 const bodyparser = require("body-parser");
-const db = require("./src/ConfigDB/index")
+const db = require("./src/Config/index")
 const User = require("./src/Model/user");
+const Cart = require("./src/Model/cart")
+// const generateRefreshToken = require("./src/Config/refreshtoken")
+const authenticateJWT = require("./src/Config/authenticateJWT")
+const validateMongoDbId = require("./src/utils/validateMongoDbId")
 const productModel = require("./src/Model/product");
 const app = express();
 app.use(cors());
@@ -32,10 +36,8 @@ app.post("/signup", async (req, res) => {
     if (isExisting) {
       return res.status(409).send({ message: "Email id is already register", alert: false });
     }
-    // Mã hóa mật khẩu trước khi lưu vào db
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    // Tạo user mới và lưu vào db
     const newUser = await User.create({ ...req.body, password: hashedPassword })
     const { password, ...others } = newUser._doc
     const token = jwt.sign({ id: newUser._id, isAdmin: newUser.isAdmin }, process.env.JWT_SECRET, { expiresIn: '5h' })
@@ -53,7 +55,6 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Tìm kiếm user trong db theo username
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).send({
@@ -71,7 +72,7 @@ app.post("/login", async (req, res) => {
       });
     }
     // Tạo token
-    const token = jwt.sign({ id: user._id }, 'secret-key', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ user, token, message: "Login is successfully", alert: true });
   } catch (error) {
@@ -86,9 +87,18 @@ app.post('/logout', (req, res) => {
   res.status(200).send({ message: 'Logout success.' });
 });
 
-
 //save product in data 
 //api
+
+app.get("/product", async (req, res) => {
+  try {
+    const data = await productModel.find()
+    res.status(200).json({ data: data });
+  } catch (e) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 app.post("/uploadProduct", async (req, res) => {
   try {
     const data = await productModel(req.body)
@@ -101,20 +111,70 @@ app.post("/uploadProduct", async (req, res) => {
   }
 })
 
-app.post("/product/edit/:id", async (req, res) => {
-  const id = await productModel.findById(req.params._id)
-  if (!id) {
-    +
-    res.status(404).send("message: No find product")
-  } else {
-
+app.get("/product/edit/:id", async (req, res) => {
+  try {
+    const product = await productModel.findById(req.params.id);
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(404).json({ message: error.message })
   }
 })
 
-//
-app.get("/product", async (req, res) => {
-  const data = await productModel.find({})
-  res.send(JSON.stringify(data))
+app.put('/uploadProduct/:id', async (req, res) => {
+  let product = req.body;
+
+  const editProd = new productModel(product);
+  try {
+    await productModel.updateOne({ _id: req.params.id }, editProd);
+    res.status(201).json(editProd);
+  } catch (error) {
+    res.status(409).json({ message: error.message });
+  }
+});
+
+app.delete('/delete/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await productModel.findByIdAndDelete({ _id: id });
+    res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete product', error: error.message });
+  }
+})
+
+
+
+
+
+// add to cart
+app.post("/add-cart", authenticateJWT, async (req, res) => {
+  const { productID, quantity } = req.body;
+
+  try {
+    // Kiểm tra sự tồn tại của sản phẩm và người dùng
+    const product = await productModel.findById(productID).exec();
+    const user = await User.findById(req.user.username).exec();
+
+    if (!product || !user) {
+      return res.status(404).json({ message: 'Product or user not found' });
+    }
+
+    // Tạo cart item mới
+    const cartItem = new Cart({
+      userID: user._id,
+      productID: product._id,
+      quantity,
+      price: product.price,
+    });
+
+    // Lưu cart item vào MongoDB
+    await cartItem.save();
+
+    res.json({ message: 'Product added to cart' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 })
 
 /*****payment getWay */

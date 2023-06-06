@@ -15,7 +15,8 @@ import Menu from "./page/Menu";
 import About from "./page/About";
 import Contact from "./page/Contact";
 import Login from "./page/login";
-import Newproduct from "./page/Newproduct";
+import Newproduct from "./page/MagageProduct/Newproduct";
+import EditProduct from "./page/MagageProduct/editProduct"
 import Signup from "./page/Signup";
 import { store, persistor } from "./redux/index";
 import { Provider } from "react-redux";
@@ -35,6 +36,7 @@ const router = createBrowserRouter(
       <Route path="contact" element={<Contact />} />
       <Route path="login" element={<Login />} />
       <Route path="manage-product/newproduct" element={<Newproduct />} />
+      <Route path="/product/edit/:id" element={<EditProduct />} />
       <Route path="manage-product" element={<ListProduct />} />
       <Route path="signup" element={<Signup />} />
       <Route path="cart" element={<Cart />} />

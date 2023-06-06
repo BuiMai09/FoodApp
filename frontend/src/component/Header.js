@@ -24,8 +24,6 @@ const Header = () => {
   const cartItemNumber = useSelector((state) => state.product.cartItem)
   return (
     <header className="fixed shadow-md w-full h-16 px-2 md:px-4 z-50 bg-white">
-      {/* desktop */}
-
       <div className="flex items-center h-full justify-between">
         <Link to={""}>
           <div className="h-10">
@@ -66,14 +64,6 @@ const Header = () => {
             </div>
             {showMenu && (
               <div className="absolute right-2 bg-white py-2  shadow drop-shadow-md flex flex-col min-w-[120px] text-center">
-                {/* {userData.email === process.env.REACT_APP_ADMIN_EMAIL && (
-                  <Link
-                    to={"newproduct"}
-                    className="whitespace-nowrap cursor-pointer px-2"
-                  >
-                    Manage Product
-                  </Link>
-                )} */}
 
                 {userData.image ? (
                   <p

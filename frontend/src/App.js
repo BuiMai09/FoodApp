@@ -5,7 +5,7 @@ import axios from "axios";
 import { Outlet } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
-import { setDataProduct } from "./redux/productSlide";
+import { setDataProduct } from "./redux/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 function App() {
@@ -15,7 +15,6 @@ function App() {
   useEffect(() => {
     (async () => {
       const res = await axios.get("http://localhost:8088/product")
-
       console.log("Resdata", res.data)
       dispatch(setDataProduct(res.data))
     })()
